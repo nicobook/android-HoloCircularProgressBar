@@ -1,5 +1,8 @@
 package com.pascalwelsch.holocircularprogressbar;
 
+import org.apache.commons.lang3.reflect.FieldUtils;
+import org.apache.commons.lang3.reflect.MethodUtils;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -66,6 +69,11 @@ public class HoloCircularProgressBar extends View {
      * used to save and restore the visibility of the marker in this instance
      */
     private static final String INSTANCE_STATE_MARKER_VISIBLE = "marker_visible";
+
+    /**
+     * Support for API Level 15 or later.
+     */
+    private static final int VERSION_CODE_JELLY_BEAN = readDeclaredStaticField(Build.VERSION_CODES.class, "JERRY_BEAN", Integer.MAX_VALUE);
 
     /**
      * The rectangle enclosing the circle.
@@ -572,8 +580,8 @@ public class HoloCircularProgressBar extends View {
     @SuppressLint("NewApi")
     private void computeInsets(final int dx, final int dy) {
         int absoluteGravity = mGravity;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            absoluteGravity = Gravity.getAbsoluteGravity(mGravity, getLayoutDirection());
+        if (Build.VERSION.SDK_INT >= VERSION_CODE_JELLY_BEAN) {
+            absoluteGravity = Gravity.getAbsoluteGravity(mGravity, invokeExactMethod(this, "getLayoutDirection", 0/* LAYOUT_DIRECTION_LTR is default. */));
         }
 
         switch (absoluteGravity & Gravity.HORIZONTAL_GRAVITY_MASK) {
@@ -659,6 +667,30 @@ public class HoloCircularProgressBar extends View {
         mThumbColorPaint.setStrokeWidth(mCircleStrokeWidth);
 
         invalidate();
+    }
+
+    /**
+     * Read declared static field.
+     */
+    @SuppressWarnings("unchecked")
+    private static <T> T readDeclaredStaticField(final Class<?> clazz, final String fieldName, final T defaultValue) {
+        try {
+            return (T) FieldUtils.readDeclaredStaticField(clazz, fieldName);
+        } catch (final Throwable t) {
+            return defaultValue;
+        }
+    }
+
+    /**
+     * Invoke exact method.
+     */
+    @SuppressWarnings("unchecked")
+    private static <T> T invokeExactMethod(final Object object, final String methodName, final T defaultValue, final Object... args) {
+        try {
+            return (T) MethodUtils.invokeExactMethod(object, methodName, args);
+        } catch (final Throwable t) {
+            return defaultValue;
+        }
     }
 
 }
